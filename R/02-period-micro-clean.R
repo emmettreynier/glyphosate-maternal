@@ -279,4 +279,4 @@ clean_natality = function(file_year, dt_out = FALSE){
 
 
 #plan(multisession(workers = 4))
-map(1990:2013, clean_natality)
+map(1990:2012, clean_natality)
