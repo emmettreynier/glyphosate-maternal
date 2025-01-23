@@ -3,16 +3,13 @@ library(pacman)
 p_load(utils, here, stringr)
 
 # Define the parent directory containing the 20 folders
-parent_directory = here('data/health-restricted/data-nchs')
+parent_dir = here('data/health-restricted/data-nchs')
 # Define the destination directory for the extracted .txt files
-destination_directory = here('data/health-restricted/raw')
+dest_dir = here('data/health-restricted/raw')
 # Create the "raw" directory if it doesn't exist
-if (!dir.exists(destination_directory)) {
-  dir.create(destination_directory)
-}
-
+if (!dir.exists(dest_dir)) dir.create(dest_dir)
 # Get a list of all subdirectories in the parent directory
-folders = list.dirs(parent_directory, recursive = FALSE) |>
+folders = list.dirs(parent_dir, recursive = FALSE) |>
   str_subset('^NatAC\\d{4}$')
 
 # Loop through each folder
@@ -33,7 +30,7 @@ for (folder in folders) {
   # Copying into raw directory
   file.copy(
     txt_file, 
-    file.path(destination_directory, paste0(basename(folder), '.txt')), 
+    file.path(dest_dir, paste0(basename(folder), '.txt')), 
     overwrite = TRUE
   )
 }
