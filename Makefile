@@ -19,7 +19,7 @@ test-print:
 
 # -----------------------------------------------------------------------------
 # Setting up higher level targets
-all: natality-clean data-download data-raw
+all: natality-clean data-download data-raw data-clean
 
 # Natality data: unzip -> extract relevant columns by year -> aggregate
 natality-clean: \
@@ -43,7 +43,12 @@ data-raw: \
  $(raw-dir)y_diff_dt.fst \
  $(CROP_DT) \
  $(raw-dir)fertilizer-dt-interpolated.fst
-
+# Intermediate files that may get updated often
+data-clean: \
+ $(clean-dir)comb-cnty-dt.fst \
+ $(clean-dir)crop-acre-percentile-90-95.fst \
+ $(clean-dir)trt-dt.fst \
+ $(clean-dir)glyph-nat-dt.fst
 
 # Natality data clean ---------------------------------------------------------
 # First need to unzip natality files 
@@ -52,15 +57,15 @@ $(NATALITY_RAW_FP): R/00-data-prep/natality/01-unzip-data.R
 	@echo "Unzipped natality data"
 # Extract data from txt into annual fst files 
 $(health-clean-dir)period-clean/natality-%.fst: \
- $(NATALITY_RAW_FP) \
+ R/00-data-prep/natality/02-period-micro-clean.R \
  R/00-data-prep/natality/00-data-dictionary.R \
- R/00-data-prep/natality/02-period-micro-clean.R
+ $(NATALITY_RAW_FP)
 	Rscript $<
 	@echo "Cleaned raw natality data"
 # Aggregate it into one file 
 $(clean-dir)natality-micro.fst: \
- $(NATALITY_CLEAN_FP) \
- R/00-data-prep/natality/03-build-natality-twfe.R
+ R/00-data-prep/natality/03-build-natality-twfe.R \
+ $(NATALITY_CLEAN_FP)
 	Rscript $<
 	@echo "Built natality micro data"
 
@@ -94,8 +99,8 @@ $(dscr-dir)farm-empl-dt.fst: R/00-data-prep/controls/01-bea-empl.R
 # Pesticide data
 $(raw-dir)est_pest_use.csv \
  $(raw-dir)est_pest_use.fst &: \
- $(dscr-dir)usgs-pesticides-raw.fst \
- R/00-data-prep/farm/01-usgs-chem-data.R 
+ R/00-data-prep/farm/01-usgs-chem-data.R \
+ $(dscr-dir)usgs-pesticides-raw.fst
 	Rscript $<
 	@echo "Cleaned pesticide data"
 # Other dependencies:
@@ -115,18 +120,64 @@ $(raw-dir)labor-dt.fst: R/00-data-prep/controls/02-bls-labor.R
 # Other dependencies $(wildcard $(dman-dir)bls-labforce-raw/*.xlsx)
 
 # Crop data
-$(CROP_DT) &: R/00-data-prep/farm/03-crop-county-cleaning.R
+$(CROP_DT) &: \
+ R/00-data-prep/farm/03-crop-county-cleaning.R \
+ download-crops
 	Rscript $<
 	@echo "Made crop data"
-# Other dependencies: $(wildcard $(dscr-dir)nass-*/*/*.fst) # Recursive?
 
 # Fertilizer data
 $(raw-dir)fertilizer-dt-interpolated.fst &: R/00-data-prep/farm/05-fertilizer.R
 	Rscript $<
 	@echo "Made fertilizer data"
-	
+
+# -----------------------------------------------------------------------------
+# Targets for data-clean
+
+# Treatment definitions
+$(clean-dir)trt-dt.fst: \
+ R/01-data-clean/00-define-treatment.R \
+ $(raw-dir)y_diff_dt.fst
+	Rscript $<
+	@echo "Made treatment definitions"	
+
+# Pre period acreage percentiles
+$(clean-dir)crop-acre-percentile-90-95.fst: \
+ R/01-data-clean/01-crop-acre-percentiles.R \
+ $(dscr-dir)cnty-area-dt.fst \
+ $(raw-dir)all-crop-acre-dt.fst \
+ $(clean-dir)trt-dt.fst
+	Rscript $<
+	@echo "Made crop acreage percentiles"
+
+# Shift share instruments 
+$(clean-dir)glyph-nat-dt.fst \
+ $(water-dir)glyph-nat-watershed-dt.fst &: \
+ R/01-data-clean/02-glyph-national.R \
+ $(raw-dir)est_pest_use.fst
+	Rscript $<
+	@echo "Made shift share instruments"
+# Other dependencies: 
+# $(dman-dir)hydrobasin-area-weights.fst 
+# $(dman-dir)upstream-dt-hydrobasin.fst 
+
+# Combining all county data into one table
+$(clean-dir)comb-cnty-dt.fst: \
+ R/01-data-clean/03-combine-cnty.R \
+ $(CROP_DT) \
+ $(raw-dir)est_pest_use.fst \
+ $(raw-dir)labor-dt.fst \
+ $(dscr-dir)cnty-area-dt.fst \
+ $(dscr-dir)cnty-pop-dt.fst \
+ $(dscr-dir)farm-empl-dt.fst \
+ $(raw-dir)fertilizer-dt-interpolated.fst \
+ $(clean-dir)trt-dt.fst
+	Rscript $<
+	@echo "Made comb-cnty-dt"
+# Other dependencies: 
+# $(dman-dir)ruralurbancodes2003.xls
 
 # -----------------------------------------------------------------------------
 # Helpers
-.PHONY: all natality-clean data-download data-raw test-print FORCE
+.PHONY: natality-clean data-download data-raw data-clean test-print FORCE
 FORCE:

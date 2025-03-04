@@ -119,7 +119,7 @@ map(
   c(path_survey, path_survey_yield, path_survey_irrigated), 
   \(x) if(!dir.exists(here(x))) dir.create(here(x), recursive = TRUE)
 )
-
+# Getting list to run--checking for things already run
 crop_years_survey = 
   crop_years |> 
   filter(
@@ -141,186 +141,65 @@ crop_years_survey_irrigated =
       !(paste0(str_replace_all(short_desc,"/","per"),"-",year,".fst") %in% list.files(path = here(path_survey_irrigated)))
   ) |>
   as.data.table()
+# Combining into one table 
+crop_yr_to_run = rbind(
+  crop_years_survey[
+    sda = short_desc, 
+    yr = year, 
+    path =  paste0(path_survey,"/",short_desc,"-",year,".fst")
+  ], 
+  crop_years_survey_yield[
+    sda = short_desc, 
+    yr = year, 
+    path =  paste0(path_survey_yield,"/",str_replace_all(sda,"/","per"),"-",yr,".fst")
+  ], 
+  crop_years_survey_irrigated[
+    sda = short_desc, 
+    yr = year, 
+    path =  here(paste0(path_survey_irrigated,"/",sda,"-",yr,".fst"))
+  ]
+)
 
-
-# Getting data for all crop/year combinations
-all_crop_acre = 
-  map2_dfr(
-    .x = crop_years_survey$short_desc,
-    .y = crop_years_survey$year,
-    .f = \(sda, yr){
-      yr_crop =   
-        nassqs(
-          list(
-            short_desc = sda,
-            year = yr,
-            agg_level_desc = "COUNTY",
-            sector_desc = "CROPS"
-            ),
-          as="data.frame"
-        )
-      write.fst(
-        yr_crop, 
-        path = here(paste0(path_survey,"/",sda,"-",yr,".fst"))
-      )
-    }
-  )
-all_crop_acre_yield = 
-  map2_dfr(
-    .x = crop_years_survey_yield$short_desc,
-    .y = crop_years_survey_yield$year,
-    .f = \(sda, yr){
-      yr_crop =   
-        nassqs(
-          list(
-            short_desc = sda,
-            year = yr,
-            agg_level_desc = "COUNTY",
-            sector_desc = "CROPS"
-          ),
-          as="data.frame"
-        )
-      write.fst(
-        yr_crop, 
-        path = here(paste0(path_survey_yield,"/",str_replace_all(sda,"/","per"),"-",yr,".fst"))
-      )
-    }
-  )
-all_crop_acre_irrigated = 
-  map2_dfr(
-    .x = crop_years_survey_irrigated$short_desc,
-    .y = crop_years_survey_irrigated$year,
-    .f = \(sda, yr){
-      yr_crop =   
-        nassqs(
+# Function to call NASS API with rate limiting
+get_crop_yr = function(sda, yr, path, max_attempts = 5){
+  print(paste('Starting', sda, yr))
+  # Loop in case there is an error
+  for(i in 1:max_attempts){
+    # Error handing via tryCatch
+    result = tryCatch(
+      { # Make API call
+        yr_crop = nassqs(
           list(
             short_desc = sda,
             year = yr,
             agg_level_desc = "COUNTY",
             sector_desc = "CROPS"
           ),
-          as="data.frame"
+          as = "data.frame"
         )
-      write.fst(
-        yr_crop, 
-        path = here(paste0(path_survey_irrigated,"/",sda,"-",yr,".fst"))
-      )
+      }, 
+      # Return message if there is an error
+      error = function(e) return("error")
+    )
+    # Save results if successful
+    if(is.data.frame(result)){
+      write.fst(result, path = here(path))
+      print('Success')
+      break
     }
-  )
+    # Throw error if we get to max_attempts
+    if(i == max_attempts){
+      stop(paste("Failed after", max_attempts, "tries."))
+    }
+    # Increase sleep amount for each failure
+    slp = 5*i
+    print(paste('Attempt', i, 'failed, sleeping for', slp, 'seconds'))
+    Sys.sleep(slp)
+  }
+}
 
-
-
-# NOT USING CENSUS DATA
-# #-------------------------------------------------------
-# # Census data (5yrs)
-# #-------------------------------------------------------
-# # Looking for the parameters that we want to get
-# short_desc_acres_census_raw = 
-#   nass_param(
-#     "short_desc",
-#     sector_desc = "CROPS",
-#     agg_level_desc = "COUNTY",
-#     source_desc = "CENSUS"
-#   ) 
-
-# # Filtering to acres planted, excluding rows that would 
-# # double count - aggregations, irrigated/non-irrigated, etc.
-# short_desc_acres_census = 
-#   short_desc_acres_census_raw[
-#     ( # First group is fruit and tree nuts 
-#       short_desc_acres_census_raw |> str_detect("ACRES BEARING & NON-BEARING") &
-#       !(short_desc_acres_census_raw |> str_detect("TOTALS")) &
-#       !(short_desc_acres_census_raw |> str_detect("OTHER")) &
-#       !(short_desc_acres_census_raw |> str_detect(",")) &
-#       !(short_desc_acres_census_raw |> str_detect("ORCHARDS"))
-#     )|( # Cherries and Walnuts, excluded because of comma above
-#       short_desc_acres_census_raw |> str_detect("ACRES BEARING & NON-BEARING") & 
-#       ((short_desc_acres_census_raw |> str_detect("CHERRIES")
-#         )|(short_desc_acres_census_raw |> str_detect("WALNUTS")))
-#     )|( # Now for the field crops and vegetables
-#       short_desc_acres_census_raw |> str_detect("ACRES HARVESTED") &
-#       !(short_desc_acres_census_raw |> str_detect("FRESH MARKET")) &
-#       !(short_desc_acres_census_raw |> str_detect("PROCESSING")) &
-#       !(short_desc_acres_census_raw |> str_detect("IRRIGATED")) &
-#       !(short_desc_acres_census_raw |> str_detect("OTHER")) &
-#       !(short_desc_acres_census_raw |> str_detect("TOTAL")) &
-#       !(short_desc_acres_census_raw |> str_detect("PIMA")) &
-#       !(short_desc_acres_census_raw |> str_detect("UPLAND")) &
-#       !(short_desc_acres_census_raw |> str_detect("ALFALFA")) &
-#       !(short_desc_acres_census_raw |> str_detect("SALT HAY")) &
-#       !(short_desc_acres_census_raw |> str_detect("HAYLAGE")) &
-#       !(short_desc_acres_census_raw |> str_detect("SMALL GRAIN")) &
-#       !(short_desc_acres_census_raw |> str_detect("HAY, WILD")) &
-#       !(short_desc_acres_census_raw |> str_detect("LETTUCE, HEAD")) &
-#       !(short_desc_acres_census_raw |> str_detect("LETTUCE, LEAF")) &
-#       !(short_desc_acres_census_raw |> str_detect("LETTUCE, ROMAINE")) &
-#       !(short_desc_acres_census_raw |> str_detect("RASPBERRIES, BLACK")) &
-#       !(short_desc_acres_census_raw |> str_detect("RASPBERRIES, RED")) &
-#       !(short_desc_acres_census_raw |> str_detect("SQUASH, SUMMER")) &
-#       !(short_desc_acres_census_raw |> str_detect("SQUASH, WINTER")) &
-#       !(short_desc_acres_census_raw |> str_detect("SUNFLOWER, OIL")) &
-#       !(short_desc_acres_census_raw |> str_detect("SUNFLOWER, NON-OIL")) &
-#       !(short_desc_acres_census_raw |> str_detect("VEGETABLES")) &
-#       !(short_desc_acres_census_raw |> str_detect("WHEAT, SPRING")) &
-#       !(short_desc_acres_census_raw |> str_detect("WHEAT, WINTER"))
-#     )|( # Alfalfa seed excluded from above
-#       short_desc_acres_census_raw |> str_detect("LEGUMES, ALFALFA, SEED - ACRES HARVESTED") 
-#     )
-#   ]
-  
-# # Getting years available for each crop
-# crop_years_census_all =   
-#   map_dfr(
-#     short_desc_acres_census,
-#     \(sda){
-#       nass_param(
-#         "year",
-#         short_desc = sda,
-#         agg_level_desc = "COUNTY",
-#         sector_desc = "CROPS",
-#         source_desc = "CENSUS"
-#       ) |> tibble() |>
-#         mutate(
-#           short_desc = sda,
-#           year = `nass_param(...)`
-#         ) |> 
-#         select(short_desc,year)
-#     }
-#   )
-
-# # Filtering to same time as health data
-# # Not actually doing anything because 
-# # these are only years loaded in API
-# path_census = "data/download-script/nass-census"
-
-# crop_years_census = 
-#   crop_years_census_all |> 
-#   filter(
-#     year %in% seq(1997,2017,by=5)& 
-#     !(paste0(short_desc,"-",year,".fst") %in% list.files(path = here(path_census)))
-#   ) |>
-#   as.data.table()
-
-# # Getting data for census
-# census_crop_acre = 
-#   map2_dfr(
-#     .x = crop_years_census$short_desc,
-#     .y = crop_years_census$year,
-#     .f = \(sda, yr){
-#       yr_crop = 
-#         nassqs(
-#           list(
-#             short_desc = sda,
-#             year = yr,
-#             agg_level_desc = "COUNTY",
-#             sector_desc = "CROPS",
-#             source_desc = "CENSUS"
-#           ),
-#           as="data.frame"
-#         )
-#       write.fst(
-#         yr_crop, 
-#         path = here(paste0(path_census,"/",sda,"-",yr,".fst"))
-#       )
-#     }
-#   )
+# Running for everything
+pmap(
+  .l = crop_yr_to_run, 
+  .f = get_crop_yr
+)

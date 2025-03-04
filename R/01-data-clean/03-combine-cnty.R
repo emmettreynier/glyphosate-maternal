@@ -33,8 +33,7 @@ check_missing_geoids = function(dt){
   return(tmp[is.na(in_panel)])
 }
 
-create_comb_cnty_dt = function(yr_start = 1990, yr_end = 2017, water_exposure = FALSE){
-  
+create_comb_cnty_dt = function(yr_start = 1990, yr_end = 2017){  
 # Creating a balanced panel of counties 
   # State fips codes 
   state_sf = states(year = 2010, cb = TRUE) |>
@@ -67,17 +66,6 @@ create_comb_cnty_dt = function(yr_start = 1990, yr_end = 2017, water_exposure = 
       here("data/raw/est_pest_use.fst"),
       as.data.table = TRUE
     )[,census_year := str_sub(year, 1,3)] 
-  # First stage 
-  fs_dt = read.fst(
-    path = here("data/clean/fs-dt.fst"),
-    as.data.table = TRUE
-  )[year %in% yr_start:yr_end, .(
-    GEOID, year, 
-    pred_glyph_km2, 
-    pred_glyphosate
-  )]
-
-
   # Now for crop data ---------------------------------------------------------------
   # ALL crop acreage
   all_crop_acre_dt = read.fst(
@@ -124,7 +112,6 @@ create_comb_cnty_dt = function(yr_start = 1990, yr_end = 2017, water_exposure = 
         year
       )
     ]
-  
   # Now employment data
   farm_empl_dt = read.fst(
     here("data/download-script/farm-empl-dt.fst"),
@@ -134,14 +121,6 @@ create_comb_cnty_dt = function(yr_start = 1990, yr_end = 2017, water_exposure = 
     .[year %in% yr_start:yr_end] %>% 
     .[,year := as.numeric(year)] %>% 
     .[,tot_pop := NULL]
-  
-  # Now education data
-  edu_dt = read.fst(
-    here("data/raw/edu-dt.fst"),
-    as.data.table = TRUE
-  ) %>% 
-    .[census_year %in% str_sub(yr_start:yr_end,1,3)]
-  
   # Labor force data
   labor_dt = read.fst(
     here("data/raw/labor-dt.fst"),
@@ -186,11 +165,6 @@ create_comb_cnty_dt = function(yr_start = 1990, yr_end = 2017, water_exposure = 
       by = c('GEOID','year'),
       all.x = TRUE
     ) |>
-    merge( 
-      fs_dt, 
-      by = c('GEOID','year'),
-      all.x = TRUE
-    ) |>
     merge(
       trt_dt, 
       by = "GEOID",
@@ -221,11 +195,6 @@ create_comb_cnty_dt = function(yr_start = 1990, yr_end = 2017, water_exposure = 
       by = c("GEOID","year"),
       all.x = T
     ) |>
-    merge(
-      edu_dt, 
-      by = c("GEOID","census_year"),
-      all.x = T
-    )|>
     merge(
       rural_dt, 
       by = c("GEOID"),
@@ -290,11 +259,9 @@ create_comb_cnty_dt = function(yr_start = 1990, yr_end = 2017, water_exposure = 
     tot_rc_acres = soy_acres + corn_acres,
     state_fips = str_sub(GEOID,1,2)
   )]
-  
   # States with any soy production reported
   soy_states = comb_dt[soy_acres > 0, state_fips] |> unique()
   soy_counties = comb_dt[soy_acres > 0, GEOID] |> unique()
-  
   # Some other loose ends
   comb_dt[,':='(
     pct_farm_empl = farm_empl/tot_empl,
@@ -316,7 +283,6 @@ create_comb_cnty_dt = function(yr_start = 1990, yr_end = 2017, water_exposure = 
     soy_state = state_fips %in% soy_states, 
     soy_county = GEOID %in% soy_counties
   )]
-
   # Census region and divisions 
   comb_dt = 
     merge(
@@ -329,38 +295,10 @@ create_comb_cnty_dt = function(yr_start = 1990, yr_end = 2017, water_exposure = 
       by = 'state_fips',
       all.x = TRUE
     )
-
-  if(water_exposure == TRUE){
-    # Upstream/downstream Exposure data
-    county_exposure_dt = 
-      read.fst(
-        path = here("data/watershed/county-exposure-dt.fst"), 
-        as.data.table = TRUE
-      ) 
-    # Merging 
-    comb_dt = 
-      merge(
-        comb_dt,
-        county_exposure_dt, 
-        by = c("GEOID","year"),
-        all = TRUE
-      ) 
-    # Setting missing to zero 
-    water_vars = colnames(county_exposure_dt)[-(1:2)]
-    # Filling in NA's with zeros
-    for (j in water_vars) {
-      set(
-        x = comb_dt,
-        i = which(is.na(comb_dt[[j]])),
-        j,
-        value = 0
-      )
-    }
-  }
-  
   # Returning the results 
   return(comb_dt[year %in% yr_start:yr_end])
 }
+
 
 # Running it!
 comb_cnty_dt = 

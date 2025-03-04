@@ -180,50 +180,9 @@
   all_splits_p = c(splits, splits_buffers$split_l, splits_buffers$split_h) |>
     percent(accuracy = 1) |> str_remove("%") |> sort() |> unique()
   all_splits = as.numeric(all_splits_p)/100
-
-  # Option 1: Quantiles for ALL of US
-  # yield_diff_quant = 
-  #   si_dt[,.(
-  #     quantile = all_splits_p,
-  #     value_all = quantile(
-  #       yield_diff, 
-  #       probs = all_splits,
-  #       na.rm = TRUE
-  #     )),
-  #     by = crop
-  #   ]
-  # # Option 2: Only counties that are east of 100th meridian
-  # e100m_yield_diff_quant = 
-  #   si_dt[
-  #     e100m == TRUE,.(
-  #     quantile = all_splits_p,
-  #     value_e100m = quantile(
-  #       yield_diff, 
-  #       probs = all_splits,
-  #       na.rm = TRUE
-  #     )),
-  #     by = crop
-  #   ]
   
   # Crops we want to keep
   crop_vec = c("gmo","soy","cot","mze","olv",'gmo_max','wpo','cab','srg','bck')
-  # Potential placebo crops: "srg","sub","yam","rcw","olv","bck"
-  # Calculating correlation between 
-  #merge(
-  #  si_dt[e100m == TRUE,.(GEOID, crop, yield_diff)] |> na.omit(), 
-  #  si_dt[e100m == TRUE & crop %in% crop_vec] |> 
-  #    dcast(GEOID ~ crop, value.var = "yield_diff") |> 
-  #    na.omit(),
-  #  by = "GEOID"
-  #)[,.(
-  #  cor_cot = cor(yield_diff, cot),
-  #  cor_soy = cor(yield_diff, soy),
-  #  cor_mze = cor(yield_diff, mze),
-  #  cor_gmo = cor(yield_diff, gmo)
-  #  ), 
-  #  keyby = crop
-  #][order(cor_gmo)]
-  
   # Calculating above/below quantiles 
   trt_long_dt = # First cross joining w/splits buffers table
     splits_buffers[,
@@ -241,59 +200,13 @@
           default = NA
         )
     )]
-    # |>
-    #   merge( # add lower bound quantiles
-    #     yield_diff_quant[
-    #       quantile %in% splits_buffers$split_l_p,
-    #       .(crop, split_l_p = quantile, value_all_l = value_all)
-    #     ],
-    #     by = c("crop","split_l_p")
-    #   ) |>
-    #   merge(
-    #     e100m_yield_diff_quant[
-    #       quantile %in% splits_buffers$split_l_p,
-    #       .(crop, split_l_p = quantile, value_e100m_l = value_e100m)
-    #     ],
-    #     by = c("crop","split_l_p")
-    #   )|>
-    #   merge( # add upper bound quantiles
-    #     yield_diff_quant[
-    #       quantile %in% splits_buffers$split_h_p,
-    #       .(crop, split_h_p = quantile, value_all_h = value_all)
-    #     ],
-    #     by = c("crop","split_h_p"),
-    #     allow.cartesian = TRUE
-    #   ) |>
-    #   merge(
-    #     e100m_yield_diff_quant[
-    #       quantile %in% splits_buffers$split_h_p,
-    #       .(crop, split_h_p = quantile, value_e100m_h = value_e100m)
-    #     ],
-    #     by = c("crop","split_h_p")
-    #   ) %>% .[,':='(
-    #     all_yield_diff = fcase(
-    #       yield_diff >= value_all_h, TRUE,
-    #       yield_diff < value_all_l, FALSE,
-    #       default = NA
-    #     ),
-    #     e100m_yield_diff = fcase(
-    #       e100m == TRUE & yield_diff >= value_e100m_h, TRUE,
-    #       e100m == TRUE & yield_diff < value_e100m_l, FALSE,
-    #       default = NA
-    #     ),
-    #  )]  
-  # An alternative way to calculate GM aggregate
   # If above cutoff for any of soy, corn, cotton
   trt_med_dt =   
     dcast(
       trt_long_dt,
       formula = GEOID + e100m + splits_p + buffers_p ~ crop,
       value.var = c("all_yield_diff","e100m_yield_diff")
-    ) #%>% 
-    #.[,':='(
-    #  all_yield_diff_gm = all_yield_diff_soy|all_yield_diff_cot|all_yield_diff_mze,
-    #  e100m_yield_diff_gm = e100m_yield_diff_soy|e100m_yield_diff_cot|e100m_yield_diff_mze
-    #)] 
+    ) 
   
   # casting into wide format 
   trt_dt = 
@@ -316,68 +229,3 @@
     x = trt_dt,
     path = here('data/clean/trt-dt.fst')
   )
-
-# Plot treatment definitions ---------------------------------------------------
-  #  # Merge treatment/suitability dataset with county data
-  #  trt_sf = 
-  #    left_join(
-  #      county_sf,
-  #      trt_dt,
-  #      by = "GEOID"
-  #    )
-  #  # Map: T/C for all US (median cut)
-  #  p1 = ggplot(data = trt_sf, aes(fill = as.character(all_yield_diff_gmo_50_0))) +
-  #    geom_sf(size = 0.1, color = NA) +
-  #    scale_fill_manual(
-  #      name = "", 
-  #      values = c("#5f6880","#ec7662"),
-  #      labels = c("Control","Treated"),
-  #      na.value = "#B4BCC2"
-  #    ) +
-  #    theme_minimal()
-  #  # Map: T/C east of 100th meridian (median cut)
-  #  p2 = ggplot(data = trt_sf, aes(fill = as.character(e100m_yield_diff_gmo_50_0))) +
-  #    geom_sf(size = 0.1, color = NA) + 
-  #    scale_fill_manual(
-  #      name = "", 
-  #      values = c("#5f6880","#ec7662"),
-  #      labels = c("Control","Treated"),
-  #      na.value = "#B4BCC2"
-  #    ) +
-  #    theme_minimal()
-  #  # Map: T/C east of 100th meridian (median cut) with 'separation'
-  #  p3 = ggplot(data = trt_sf, aes(fill = as.character(e100m_yield_diff_gmo_50_10))) +
-  #    geom_sf(size = 0.1, color = NA) + 
-  #    scale_fill_manual(
-  #      name = "", 
-  #      values = c("#5f6880","#ec7662"),
-  #      labels = c("Control","Treated"),
-  #      na.value = "#B4BCC2"
-  #    ) +
-  #    theme_minimal()
-   # Plot together
-   #p1 / p2 / p3
-   #ggsave(
-   #  plot = p1,
-   #  filename = here("figures/did/trt-yield-diff-gmo-50-0.jpeg"),
-   #  height = 4.5, width = 8
-   #)
-   #ggsave(
-   #  plot = p2,
-   #  filename = here("figures/did/trt-e100-yield-diff-gmo-50-0.jpeg"),
-   #  height = 4.5, width = 8
-   #)
-   #ggsave(
-   #  plot = p3,
-   #  filename = here("figures/did/trt-e100-yield-diff-gmo-50-10.jpeg"),
-   #  height = 4.5, width = 8
-   #)
-   #ggplot(data = trt_sf, aes(fill = as.character(e100m_yield_diff_olv_75_0))) +
-   #  geom_sf(size = 0.1, color = NA) + 
-   #  scale_fill_manual(
-   #    name = "", 
-   #    values = c("#5f6880","#ec7662"),
-   #    labels = c("Control","Treated"),
-   #    na.value = "#B4BCC2"
-   #  ) +
-   #  theme_minimal()

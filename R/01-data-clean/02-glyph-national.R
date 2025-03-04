@@ -76,7 +76,7 @@ if(!file.exists(here('data/raw/county-dist-dt.fst'))){
   # County to hybas crosswalk
   area_weight_dt = 
     read_fst(
-      here("data/watershed/weights/hydrobasin-area-weights.fst"),
+      here("data/download-manual/hydrobasin-area-weights.fst"),
       as.data.table = TRUE
     )[,.(
       hybas_id, 
@@ -87,7 +87,7 @@ if(!file.exists(here('data/raw/county-dist-dt.fst'))){
   # Upstream watersheds
   upstream_dt = 
     read.fst(
-      path = here("data/watershed/upstream-dt-hydrobasin.fst"), 
+      path = here("data/download-manual/upstream-dt-hydrobasin.fst"), 
       as.data.table = TRUE
     )[ # Filtering to just upstream. Picking out relevant columns
       dist_km > 0 & local == FALSE,.(
@@ -169,30 +169,3 @@ write.fst(
   shift_share_dt, 
   here('data/clean/glyph-nat-dt.fst')
 )
-
-# Now making a watershed level version
-  # First re-adjusting weights 
-  area_weight_dt[,
-    wt := watershed_weight/sum(watershed_weight),
-    by = hybas_id
-  ]
-  watershed_shift_share_dt = 
-    merge(
-      shift_share_dt,
-      area_weight_dt,
-      by = 'GEOID',
-      allow.cartesian = TRUE
-    )[,-c('GEOID','watershed_weight')] |>
-    gby(hybas_id, year) |>
-    fmean(w = wt)
-  # saving the result 
-  write.fst(
-    watershed_shift_share_dt, 
-    here('data/watershed/glyph-nat-watershed-dt.fst')
-  )
-
-
-#p_load(ggplot2)
-#ggplot(shift_share_dt, aes(x = glyphosate_nat_100km)) + 
-#  geom_density() + 
-#  geom_density(aes(x = glyphosate_nat), color= 'red')
