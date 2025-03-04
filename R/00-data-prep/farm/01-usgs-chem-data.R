@@ -11,13 +11,11 @@ p_load(
 options(tigris_use_cache =TRUE)
 
 #-------------------------------------------------------
-
 # Reading files from earlier years
 pest = read.fst(
   here('data/download-script/usgs-pesticides-raw.fst'),
   as.data.table = TRUE
 )
-
 # 2013-2017 Data is in it's own file
 pest2 = 
   fread(
@@ -29,16 +27,12 @@ pest2 =
     sep = "\t"
   ) |>
   clean_names()
-
 # Combining
 pest_all = rbind(pest, pest2, use.names = TRUE)
-
 # Loading table with insecticide/herbicide/fungicide classifications
 pest_class = 
   fread(here("data/download-manual/pesticide_classification.txt"),header = F, sep = "~") |>
   setnames(new = c("compound","class"))
-
-
 # Adding in some chemicals of interest, classifying the rest
 # County and State FIPS codes don't have leading 0's in raw data
 pest_dt = 
@@ -74,7 +68,6 @@ pest_dt =
   clean_names() |>
   setnames(old = "geoid",new="GEOID")|> # I know...ugh...
   setkey(GEOID, year)
-
 # Updating GEOID's that have changed 
 # 12025->12086, 46102->46113
   #pest_dt[GEOID %in% c(12025, 12086), .N, keyby = year][,.N,by = N]
@@ -86,7 +79,6 @@ pest_dt =
       !(GEOID %in% c(12025,46102)), GEOID
     )
   ]
-
 # Turning it into a balanced panel
 states_sf = 
   states(
@@ -108,7 +100,6 @@ county_sf =
   mutate(
     GEOID = paste0(statefp, countyfp)
   ) 
-
 pest_dt_balanced = 
   CJ(
     GEOID = county_sf$GEOID, 
@@ -119,13 +110,10 @@ pest_dt_balanced =
     by = c('GEOID','year'),
     all.x = TRUE
   )
-
 # Filling in NA's with zeros
 for (j in names(pest_dt_balanced)[-(1:2)]) {
   set(pest_dt_balanced,which(is.na(pest_dt_balanced[[j]])),j,0)
 }
-
-
 # Saving the data
 fwrite(
   pest_dt_balanced, 

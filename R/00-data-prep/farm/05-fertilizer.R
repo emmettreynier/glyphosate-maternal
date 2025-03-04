@@ -142,7 +142,8 @@ write.fst(
 
 # Plotting interpolation for select counties ----------------------------------
 p_load(ggplot2, fixest, collapse)
-dir.create('figures/descriptive/fertilizer', showWarnings = FALSE)
+fert_fig_fp = 'figures/descriptive/fertilizer/'
+dir.create(here(fert_fig_fp), showWarnings = FALSE)
 annual_fert_dt = read.fst(
   here('data/raw/fertilizer-dt-interpolated.fst'), 
   as.data.table = TRUE
@@ -175,9 +176,10 @@ interp_p =
   scale_x_continuous(name = '', breaks = seq(1950,2020, by = 20)) + 
   scale_color_brewer(name = 'County FIPS', palette = 'Dark2') +
   theme_minimal(base_size = 12)
+# Saving the figure
 ggsave(
   interp_p, 
-  filename = here('figures/descriptive/fertilizer/interpolation.pdf'), 
+  filename = here(fert_fig_fp,'interpolation.pdf'), 
   device = cairo_pdf(), 
   dpi = 600, 
   width = 6, height = 4 

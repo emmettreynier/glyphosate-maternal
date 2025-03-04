@@ -3,12 +3,15 @@
 R_OPTS=--vanilla
 health-dir := data/health-restricted/
 dscr-dir := data/download-script/
+raw-dir := data/raw/
 clean-dir := data/clean/
 
 # Define variables
 YEARS := $(shell seq 1990 2012)
 NATALITY_RAW_FP := $(health-dir)raw/NatAC1990.txt #TODO: FILL IN REAL FILENAMES
 NATALITY_CLEAN_FP := $(addprefix $(health-clean-dir)period-clean/natality-,$(addsuffix .fst, $(YEARS)))
+CROP_NAMES := acre yield irrigated
+CROP_DT := $(CROP_NAMES:%=$(raw-dir)all-crop-%-dt.fst)
 
 # Just testing things are set up correctly
 test-print:
@@ -16,8 +19,13 @@ test-print:
 
 # -----------------------------------------------------------------------------
 # Setting up higher level targets
-all: data-download natality-clean 
+all: natality-clean data-download data-raw
 
+# Natality data: unzip -> extract relevant columns by year -> aggregate
+natality-clean: \
+ $(NATALITY_CLEAN_FP) \
+ $(NATALITY_RAW_FP) \
+ $(clean-dir)natality-micro.fst
 # Downloading from web or API
 data-download: \
  $(dscr-dir)usgs-pesticides-raw.fst \
@@ -25,12 +33,17 @@ data-download: \
  $(dscr-dir)cnty-pop-dt.fst \
  $(dscr-dir)farm-empl-dt.fst \
  download-crops
+# Raw data we won't touch very often
+data-raw: \
+ $(raw-dir)est_pest_use.csv \
+ $(raw-dir)est_pest_use.fst \
+ $(raw-dir)edu-dt.fst \
+ $(raw-dir)labor-dt.fst \
+ $(raw-dir)census_crop_acre_county.fst \
+ $(raw-dir)y_diff_dt.fst \
+ $(CROP_DT) \
+ $(raw-dir)fertilizer-dt-interpolated.fst
 
-# Natality data: unzip -> extract relevant columns by year -> aggregate
-natality-clean: \
- $(NATALITY_CLEAN_FP) \
- $(NATALITY_RAW_FP) \
- $(clean-dir)natality-micro.fst
 
 # Natality data clean ---------------------------------------------------------
 # First need to unzip natality files 
@@ -77,6 +90,43 @@ $(dscr-dir)farm-empl-dt.fst: R/00-data-prep/controls/01-bea-empl.R
 	@echo "Downloaded BEA data"
 
 # -----------------------------------------------------------------------------
+# Targets for data-raw
+# Pesticide data
+$(raw-dir)est_pest_use.csv \
+ $(raw-dir)est_pest_use.fst &: \
+ $(dscr-dir)usgs-pesticides-raw.fst \
+ R/00-data-prep/farm/01-usgs-chem-data.R 
+	Rscript $<
+	@echo "Cleaned pesticide data"
+# Other dependencies:
+# $(dman-dir)est_pest_use_raw_2013_2017.txt
+
+# GAEZ suitability data
+$(raw-dir)y_diff_dt.fst &: R/00-data-prep/farm/04-gaez-yield.R 
+	Rscript $<
+	@echo "Made suitability data"
+# Other dependencies: 
+# $(wildcard $(dman-dir)/attainaible-yield/yl*r_*.tif)
+
+# BLS labor data
+$(raw-dir)labor-dt.fst: R/00-data-prep/controls/02-bls-labor.R
+	Rscript $<
+	@echo "Made bls labor data"
+# Other dependencies $(wildcard $(dman-dir)bls-labforce-raw/*.xlsx)
+
+# Crop data
+$(CROP_DT) &: R/00-data-prep/farm/03-crop-county-cleaning.R
+	Rscript $<
+	@echo "Made crop data"
+# Other dependencies: $(wildcard $(dscr-dir)nass-*/*/*.fst) # Recursive?
+
+# Fertilizer data
+$(raw-dir)fertilizer-dt-interpolated.fst &: R/00-data-prep/farm/05-fertilizer.R
+	Rscript $<
+	@echo "Made fertilizer data"
+	
+
+# -----------------------------------------------------------------------------
 # Helpers
-.PHONY: all natality-clean test-print FORCE
+.PHONY: all natality-clean data-download data-raw test-print FORCE
 FORCE:
