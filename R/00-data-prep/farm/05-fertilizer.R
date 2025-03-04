@@ -149,7 +149,7 @@ annual_fert_dt = read.fst(
   as.data.table = TRUE
 )
 tmp = merge(
-  annual_fert_dt, 
+  annual_fert_dt |> melt(id.vars = c('GEOID','year')), 
   fert_dt_long, 
   by = c('GEOID','variable','year'), 
   all.x = TRUE
@@ -182,5 +182,6 @@ ggsave(
   filename = here(fert_fig_fp,'interpolation.pdf'), 
   device = cairo_pdf(), 
   dpi = 600, 
-  width = 6, height = 4 
+  width = 6, height = 4, 
+  create.dir = TRUE
 )

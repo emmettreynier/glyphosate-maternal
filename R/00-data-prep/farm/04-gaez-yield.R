@@ -5,6 +5,7 @@ p_load(
   ggplot2, fst, stringr, furrr, terra, exactextractr, magrittr
 )
 options(tigris_use_cache = TRUE)
+raw_dir = "data/raw/attainable-yield-county"
 # Getting one file to convert crs to
 y_soy_h = read_stars(here(
   "data/download-manual/attainable-yield/ylHr_soy.tif"
@@ -69,20 +70,21 @@ aggregate_gaez_county = function(crop){
   # Saving the results 
   write.fst(
     y_diff_dt, 
-    path = here(paste0(
-      "data/raw/attainable-yield-county/y-diff-",
-      crop,"-dt.fst"
-    ))
+    path = here(
+      raw_dir,
+      paste0("y-diff-",crop,"-dt.fst")
+    )
   )
   return(y_diff_dt)
 }  
-  
+
 # Grabbing the crops we have to aggregate
+if(!dir.exists(here(raw_dir))) dir.create(here(raw_dir))
 crop_list = list.files(here("data/download-manual/attainable-yield")) |>
   str_extract("(?<=_)\\w{3}(?=\\.)") |>
   unique()
 already_run = list.files(here(
-  "data/raw/attainable-yield-county"
+  raw_dir
   )) |>
   str_extract("(?<=y-diff-)\\w{3}(?=-dt)") |>
   unique()
@@ -98,7 +100,7 @@ y_diff_dt  =
 y_diff_dt = 
   map_dfr(
     list.files(
-      here("data/raw/attainable-yield-county"),
+      here(raw_dir),
       full.names = TRUE
     ),
     \(x){read.fst(path = x, as.data.table = TRUE)}

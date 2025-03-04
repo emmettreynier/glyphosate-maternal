@@ -114,7 +114,7 @@ create_comb_cnty_dt = function(yr_start = 1990, yr_end = 2017){
     ]
   # Now employment data
   farm_empl_dt = read.fst(
-    here("data/download-script/farm-empl-dt.fst"),
+    here("data/download-manual/farm-empl-dt.fst"),
     as.data.table = TRUE
   ) %>% 
     .[!(str_sub(GEOID, 1,2) %in% c("02","15","60","66","69","72","78"))] %>%
@@ -229,7 +229,6 @@ create_comb_cnty_dt = function(yr_start = 1990, yr_end = 2017){
   fert_cols = colnames(annual_fert_dt)[-(1:2)]
   # For data in these tables, missing values are considered zero's
   zero_vars = c(
-    colnames(fs_dt)[-(1:2)],
     colnames(pest_dt)[-(1:2)],
     colnames(all_crop_acre_dt)[-(1:4)],
     colnames(all_crop_yield_dt)[-(1:4)],
@@ -304,8 +303,7 @@ create_comb_cnty_dt = function(yr_start = 1990, yr_end = 2017){
 comb_cnty_dt = 
   create_comb_cnty_dt(
     yr_start = 1990, 
-    yr_end = 2017,
-    water_exposure = FALSE
+    yr_end = 2017
   )
 write.fst(
   comb_cnty_dt,

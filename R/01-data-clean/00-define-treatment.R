@@ -225,6 +225,7 @@
       by = c('GEOID')
     )  
   # Save the treatment definitions 
+  if(!dir.exists(here('data/clean'))) dir.create(here('data/clean'))
   write_fst(
     x = trt_dt,
     path = here('data/clean/trt-dt.fst')

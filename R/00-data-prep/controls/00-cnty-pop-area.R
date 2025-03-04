@@ -20,6 +20,7 @@ states_sf =
 #-------------------------------------------------------
 # County area 
 #-------------------------------------------------------
+if(!file.exists(here("data/download-script/cnty-area-dt.fst"))){
 # Function to get county shapefiles by state/year
 get_cnty_area = function(state_fips, yr){
   # Getting the shapefiles
@@ -75,17 +76,18 @@ cnty_area_dt =
   cnty_area_dt[,.(
     GEOID = paste0(state_fips,county_fips),
     census_year,
-    area_km2, dist_stl_km
+    area_km2
   )]
 # Saving the results
 write.fst(
   cnty_area_dt, 
   path = here("data/download-script/cnty-area-dt.fst")
 )
-
+}
 #-------------------------------------------------------
 # 1990-2000: pep/int_charagegroups
 #-------------------------------------------------------
+if(!file.exists(here("data/download-script/cnty-pop-90.fst"))){
 vars90 = 
   listCensusMetadata(
     name = "pep/int_charagegroups", 
@@ -134,10 +136,11 @@ write.fst(
   cnty_pop_90_dt, 
   path = here("data/download-script/cnty-pop-90.fst")
 )
-
+}
 #-------------------------------------------------------
 # 2000-2010: pep/int_population
 #-------------------------------------------------------
+if(!file.exists(here("data/download-script/cnty-pop-00.fst"))){
 vars00 = 
   listCensusMetadata(
     name = "pep/int_charagegroups", 
@@ -185,10 +188,11 @@ write.fst(
   cnty_pop_00_dt, 
   path = here("data/download-script/cnty-pop-00.fst")
 )
-
+}
 #-------------------------------------------------------
 # 2010-2019: pep/population
 #-------------------------------------------------------
+if(!file.exists(here("data/download-script/cnty-pop-10.fst"))){
 vars10 = 
   listCensusMetadata(
     name = "pep/charagegroups", 
@@ -237,15 +241,16 @@ write.fst(
   cnty_pop_10_dt, 
   path = here("data/download-script/cnty-pop-10.fst")
 )
-
+}
 #-------------------------------------------------------
 # Combining all of the results 
 #-------------------------------------------------------
+if(!file.exists(here("data/download-script/cnty-pop-dt.fst"))){
 cnty_pop_dt = 
   rbind(
-    cnty_pop_90_dt,
-    cnty_pop_00_dt,
-    cnty_pop_10_dt
+    read.fst(here("data/download-script/cnty-pop-90.fst"), as.data.table = TRUE),
+    read.fst(here("data/download-script/cnty-pop-00.fst"), as.data.table = TRUE),
+    read.fst(here("data/download-script/cnty-pop-10.fst"), as.data.table = TRUE)
   )
 # Creating GEOID
 cnty_pop_dt = 
@@ -259,3 +264,4 @@ write.fst(
   cnty_pop_dt, 
   path = here("data/download-script/cnty-pop-dt.fst")
 )
+}

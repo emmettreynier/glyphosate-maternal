@@ -143,23 +143,22 @@ crop_years_survey_irrigated =
   as.data.table()
 # Combining into one table 
 crop_yr_to_run = rbind(
-  crop_years_survey[
+  crop_years_survey[,.(
     sda = short_desc, 
     yr = year, 
     path =  paste0(path_survey,"/",short_desc,"-",year,".fst")
-  ], 
-  crop_years_survey_yield[
+  )], 
+  crop_years_survey_yield[,.(
     sda = short_desc, 
     yr = year, 
-    path =  paste0(path_survey_yield,"/",str_replace_all(sda,"/","per"),"-",yr,".fst")
-  ], 
-  crop_years_survey_irrigated[
+    path =  paste0(path_survey_yield,"/",str_replace_all(short_desc,"/","per"),"-",year,".fst")
+  )], 
+  crop_years_survey_irrigated[,.(
     sda = short_desc, 
     yr = year, 
-    path =  here(paste0(path_survey_irrigated,"/",sda,"-",yr,".fst"))
-  ]
+    path =  paste0(path_survey_irrigated,"/",short_desc,"-",year,".fst")
+  )]
 )
-
 # Function to call NASS API with rate limiting
 get_crop_yr = function(sda, yr, path, max_attempts = 5){
   print(paste('Starting', sda, yr))

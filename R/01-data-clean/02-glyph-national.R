@@ -76,7 +76,7 @@ if(!file.exists(here('data/raw/county-dist-dt.fst'))){
   # County to hybas crosswalk
   area_weight_dt = 
     read_fst(
-      here("data/download-manual/hydrobasin-area-weights.fst"),
+      here("data/download-manual/watershed/hydrobasin-area-weights.fst"),
       as.data.table = TRUE
     )[,.(
       hybas_id, 
@@ -87,7 +87,7 @@ if(!file.exists(here('data/raw/county-dist-dt.fst'))){
   # Upstream watersheds
   upstream_dt = 
     read.fst(
-      path = here("data/download-manual/upstream-dt-hydrobasin.fst"), 
+      path = here("data/download-manual/watershed/upstream-dt-hydrobasin.fst"), 
       as.data.table = TRUE
     )[ # Filtering to just upstream. Picking out relevant columns
       dist_km > 0 & local == FALSE,.(

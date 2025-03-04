@@ -30,9 +30,7 @@ natality-clean: \
 data-download: \
  $(dscr-dir)usgs-pesticides-raw.fst \
  $(dscr-dir)cnty-area-dt.fst \
- $(dscr-dir)cnty-pop-dt.fst \
- $(dscr-dir)farm-empl-dt.fst \
- download-crops
+ $(dscr-dir)cnty-pop-dt.fst
 # Raw data we won't touch very often
 data-raw: \
  $(raw-dir)est_pest_use.csv \
@@ -77,10 +75,15 @@ $(dscr-dir)usgs-pesticides-raw.fst: R/00-data-prep/farm/01a-usgs-chem-download.R
 	Rscript $<
 	@echo "Downloaded pesticide data"
 
-# USDA NASS data
-download-crops: R/00-data-prep/farm/02-usda-nass-data.R
-	Rscript $<
+# USDA NASS crop data 
+$(CROP_DT) &: \
+ R/00-data-prep/farm/02-usda-nass-data.R \
+ R/00-data-prep/farm/03-crop-county-cleaning.R \
+ $(dscr-dir)cnty-area-dt.fst
+	Rscript R/00-data-prep/farm/02-usda-nass-data.R
 	@echo "Downloaded USDA NASS"
+	Rscript R/00-data-prep/farm/03-crop-county-cleaning.R
+	@echo "Made crop data"
 
 # County population from census and county area
 $(dscr-dir)cnty-area-dt.fst \
@@ -88,11 +91,6 @@ $(dscr-dir)cnty-area-dt.fst \
  R/00-data-prep/controls/00-cnty-pop-area.R
 	Rscript $<
 	@echo "Calculated county area and pop"
-
-# BEA employment
-$(dscr-dir)farm-empl-dt.fst: R/00-data-prep/controls/01-bea-empl.R
-	Rscript $<
-	@echo "Downloaded BEA data"
 
 # -----------------------------------------------------------------------------
 # Targets for data-raw
@@ -118,13 +116,6 @@ $(raw-dir)labor-dt.fst: R/00-data-prep/controls/02-bls-labor.R
 	Rscript $<
 	@echo "Made bls labor data"
 # Other dependencies $(wildcard $(dman-dir)bls-labforce-raw/*.xlsx)
-
-# Crop data
-$(CROP_DT) &: \
- R/00-data-prep/farm/03-crop-county-cleaning.R \
- download-crops
-	Rscript $<
-	@echo "Made crop data"
 
 # Fertilizer data
 $(raw-dir)fertilizer-dt-interpolated.fst &: R/00-data-prep/farm/05-fertilizer.R
@@ -169,13 +160,13 @@ $(clean-dir)comb-cnty-dt.fst: \
  $(raw-dir)labor-dt.fst \
  $(dscr-dir)cnty-area-dt.fst \
  $(dscr-dir)cnty-pop-dt.fst \
- $(dscr-dir)farm-empl-dt.fst \
  $(raw-dir)fertilizer-dt-interpolated.fst \
  $(clean-dir)trt-dt.fst
 	Rscript $<
 	@echo "Made comb-cnty-dt"
 # Other dependencies: 
 # $(dman-dir)ruralurbancodes2003.xls
+# $(dman-dir)farm-empl-dt.fst
 
 # -----------------------------------------------------------------------------
 # Helpers
