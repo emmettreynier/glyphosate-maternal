@@ -224,7 +224,7 @@ clean_nass_data = function(type, asd_county_xwalk, asd_switch, cnty_area_dt){
   write.fst(
     all_crop_dt,
     here(paste0(
-      'data/raw/all-crop-',
+      'data/download-script/all-crop-',
       str_remove(type, '(?<=acre)s'),
       '-dt.fst'
     ))
@@ -232,7 +232,6 @@ clean_nass_data = function(type, asd_county_xwalk, asd_switch, cnty_area_dt){
   # Now aggregating to 
 }
 
-if(!dir.exists(here('data/raw'))) dir.create(here('data/raw'))
 # Running it! 
 map(
   c('acres','yield','irrigated'),

@@ -7,11 +7,11 @@ p_load(
 
 # Loading crop data
 crop_acre_dt = read.fst(
-  here('data/raw/all-crop-acre-dt.fst'), 
+  here('data/download-script/all-crop-acre-dt.fst'), 
   as.data.table = TRUE
 )
 crop_yield_dt = read.fst(
-  here('data/raw/all-crop-yield-dt.fst'), 
+  here('data/download-script/all-crop-yield-dt.fst'), 
   as.data.table = TRUE
 )
 # Loading county sizes 
