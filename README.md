@@ -6,6 +6,8 @@ Effects of glyphosate on maternal health outcomes
 - [ ] Make sure we are using consistent data source for employment and population 
   - [ ] Employment: Currently getting farm/nonfarm (and total) from the BEA, totals from BLS  
   - [ ] Population: Getting population data from SEER, Census, and BEA  
+- [ ] Add target for the SEER data that runs `R/00-data-prep/controls/06-seer.R`, need `download-manual/us.1990_2022.singleages.adjusted.txt` from other repo  
+- [ ] Documentation of where `farm-resource-regions.xls` came from  
 
 
 ## Requirements 
