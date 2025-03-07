@@ -135,11 +135,11 @@ $(clean-dir)trt-dt.fst: \
 # Pre period acreage percentiles
 $(clean-dir)crop-acre-percentile-90-95.fst: \
  R/01-data-clean/01-crop-acre-percentiles.R \
- $(dscr-dir)cnty-area-dt.fst \
  $(raw-dir)all-crop-acre-dt.fst \
  $(clean-dir)trt-dt.fst
 	Rscript $<
 	@echo "Made crop acreage percentiles"
+# $(dscr-dir)cnty-area-dt.fst \
 
 # Shift share instruments 
 $(clean-dir)glyph-nat-dt.fst \
@@ -155,18 +155,18 @@ $(clean-dir)glyph-nat-dt.fst \
 # Combining all county data into one table
 $(clean-dir)comb-cnty-dt.fst: \
  R/01-data-clean/03-combine-cnty.R \
- $(CROP_DT) \
  $(raw-dir)est_pest_use.fst \
  $(raw-dir)labor-dt.fst \
- $(dscr-dir)cnty-area-dt.fst \
- $(dscr-dir)cnty-pop-dt.fst \
  $(raw-dir)fertilizer-dt-interpolated.fst \
  $(clean-dir)trt-dt.fst
 	Rscript $<
 	@echo "Made comb-cnty-dt"
 # Other dependencies: 
+# $(CROP_DT) \
 # $(dman-dir)ruralurbancodes2003.xls
 # $(dman-dir)farm-empl-dt.fst
+# $(dscr-dir)cnty-area-dt.fst \
+# $(dscr-dir)cnty-pop-dt.fst \
 
 # -----------------------------------------------------------------------------
 # Helpers
