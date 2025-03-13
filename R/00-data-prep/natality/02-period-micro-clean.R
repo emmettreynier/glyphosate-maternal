@@ -14,7 +14,7 @@ state_fips = data.table(tigris::fips_codes)[,.(
 )] |> unique()
 
 # Getting the natality data dictionary 
-source(here("R/00-data-dictionary.R"))
+source(here("R/00-data-prep/natality/00-data-dictionary.R"))
 # Creating folder to put these in 
 dest_dir = here('data/health-restricted/period-clean')
 if (!dir.exists(dest_dir)) dir.create(dest_dir)

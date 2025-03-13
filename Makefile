@@ -9,7 +9,7 @@ clean-dir := data/clean/
 # Define variables
 YEARS := $(shell seq 1990 2012)
 NATALITY_RAW_FP := $(health-dir)raw/NatAC1990.txt #TODO: FILL IN REAL FILENAMES
-NATALITY_CLEAN_FP := $(addprefix $(health-clean-dir)period-clean/natality-,$(addsuffix .fst, $(YEARS)))
+NATALITY_CLEAN_FP := $(addprefix $(health-dir)period-clean/natality-,$(addsuffix .fst, $(YEARS)))
 CROP_NAMES := acre yield irrigated
 CROP_DT := $(CROP_NAMES:%=$(raw-dir)all-crop-%-dt.fst)
 
@@ -54,7 +54,7 @@ $(NATALITY_RAW_FP): R/00-data-prep/natality/01-unzip-data.R
 	Rscript $< 
 	@echo "Unzipped natality data"
 # Extract data from txt into annual fst files 
-$(health-clean-dir)period-clean/natality-%.fst: \
+$(health-dir)period-clean/natality-%.fst: \
  R/00-data-prep/natality/02-period-micro-clean.R \
  R/00-data-prep/natality/00-data-dictionary.R \
  $(NATALITY_RAW_FP)

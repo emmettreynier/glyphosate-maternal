@@ -6,8 +6,7 @@
 
 # Setup ------------------------------------------------------------------------
   # Load packages
-  pacman::p_load(fastverse, patchwork, parallel, magrittr, here)
-  fastverse_extend(topics = c('ST'))
+  pacman::p_load(fastverse, patchwork, parallel, magrittr, here, stringr, fst)
 
 
 # Load data --------------------------------------------------------------------
