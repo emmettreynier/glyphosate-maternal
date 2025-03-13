@@ -54,7 +54,7 @@ $(NATALITY_RAW_FP): R/00-data-prep/natality/01-unzip-data.R
 	Rscript $< 
 	@echo "Unzipped natality data"
 # Extract data from txt into annual fst files 
-$(health-dir)period-clean/natality-%.fst: \
+$(health-clean-dir)period-clean/natality-%.fst: \
  R/00-data-prep/natality/02-period-micro-clean.R \
  R/00-data-prep/natality/00-data-dictionary.R \
  $(NATALITY_RAW_FP)

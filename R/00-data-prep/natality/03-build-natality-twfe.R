@@ -12,7 +12,7 @@
 # Load data --------------------------------------------------------------------
   # Define desired years
 # ADJUST Choose desired years
-  yrs = 1990:2013
+  yrs = 1990:2012
   # Natality data
   threads_fst(1)
   natality_dt = 
@@ -21,7 +21,7 @@
       FUN = function(yr) {
         # Load the dataset
         read_fst(
-          here(paste0("data/health-restricted/period-clean/natality-",yr,".fst")),
+          here(paste0("data/health-restricted/period-clean/natality-", yr, ".fst")),
           as.data.table = TRUE
         )
       },
