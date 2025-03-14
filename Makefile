@@ -145,10 +145,11 @@ $(clean-dir)trt-dt.fst: \
 # Pre period acreage percentiles
 $(clean-dir)crop-acre-percentile-90-95.fst: \
  R/01-data-clean/01-crop-acre-percentiles.R \
- $(raw-dir)all-crop-acre-dt.fst \
  $(clean-dir)trt-dt.fst
 	Rscript $<
 	@echo "Made crop acreage percentiles"
+# Other dependencies: 
+# $(raw-dir)all-crop-acre-dt.fst \
 # $(dscr-dir)cnty-area-dt.fst \
 
 # Shift share instruments 
