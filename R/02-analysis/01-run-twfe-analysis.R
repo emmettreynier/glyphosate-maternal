@@ -888,7 +888,7 @@
     base_fe = c('year_month', 'fips_res', 'fips_occ'),
     dem_fe = TRUE,
     dad_fe = TRUE,
-    control_set = list2(
+    control_sets = list2(
       'none',
       c(
         'pest',
@@ -925,7 +925,7 @@
     base_fe = c('year_month', 'fips_res', 'fips_occ'),
     dem_fe = TRUE,
     dad_fe = TRUE,
-    control_set = list2(
+    control_sets = list2(
       'none',
       c(
         'pest',
