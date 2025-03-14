@@ -102,11 +102,11 @@ $(dscr-dir)cnty-area-dt.fst \
 # Pesticide data
 $(raw-dir)est_pest_use.csv \
  $(raw-dir)est_pest_use.fst &: \
- R/00-data-prep/farm/01-usgs-chem-data.R \
- $(dscr-dir)usgs-pesticides-raw.fst
+ R/00-data-prep/farm/01-usgs-chem-data.R
 	Rscript $<
 	@echo "Cleaned pesticide data"
 # Other dependencies:
+# $(dscr-dir)usgs-pesticides-raw.fst
 # $(dman-dir)est_pest_use_raw_2013_2017.txt
 
 # GAEZ suitability data
@@ -153,8 +153,7 @@ $(clean-dir)crop-acre-percentile-90-95.fst: \
 # $(dscr-dir)cnty-area-dt.fst \
 
 # Shift share instruments 
-$(clean-dir)glyph-nat-dt.fst \
- $(water-dir)glyph-nat-watershed-dt.fst &: \
+$(clean-dir)glyph-nat-dt.fst &: \
  R/01-data-clean/02-glyph-national.R \
  $(raw-dir)est_pest_use.fst
 	Rscript $<
