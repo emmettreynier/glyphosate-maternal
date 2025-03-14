@@ -8,14 +8,18 @@ clean-dir := data/clean/
 
 # Define variables
 YEARS := $(shell seq 1990 2012)
-NATALITY_RAW_FP := $(health-dir)raw/NatAC1990.txt #TODO: FILL IN REAL FILENAMES
+NATALITY_RAW_FP := $(addprefix $(health-dir)raw/NatAC,$(addsuffix .txt, $(YEARS)))
 NATALITY_CLEAN_FP := $(addprefix $(health-dir)period-clean/natality-,$(addsuffix .fst, $(YEARS)))
 CROP_NAMES := acre yield irrigated
 CROP_DT := $(CROP_NAMES:%=$(raw-dir)all-crop-%-dt.fst)
+# SEER files 
+SEER_SEX := all male female
+SEER_YR := 1990 1969
+SEER_DT := $(foreach sex, $(SEER_SEX), $(foreach yr, $(SEER_YR), $(raw-dir)seer-shares-$(sex)pop-$(yr)-2022.fst))
 
 # Just testing things are set up correctly
 test-print:
-	@echo $(clean-dir)
+	@echo $(NATALITY_CLEAN_FP)
 
 # -----------------------------------------------------------------------------
 # Setting up higher level targets
@@ -39,22 +43,23 @@ data-raw: \
  $(raw-dir)labor-dt.fst \
  $(raw-dir)census_crop_acre_county.fst \
  $(raw-dir)y_diff_dt.fst \
- $(CROP_DT) \
- $(raw-dir)fertilizer-dt-interpolated.fst
+ $(raw-dir)fertilizer-dt-interpolated.fst \
+ $(CROP_DT)
 # Intermediate files that may get updated often
 data-clean: \
  $(clean-dir)comb-cnty-dt.fst \
  $(clean-dir)crop-acre-percentile-90-95.fst \
  $(clean-dir)trt-dt.fst \
- $(clean-dir)glyph-nat-dt.fst
+ $(clean-dir)glyph-nat-dt.fst \
+ $(SEER_DT)
 
 # Natality data clean ---------------------------------------------------------
 # First need to unzip natality files 
-$(NATALITY_RAW_FP): R/00-data-prep/natality/01-unzip-data.R 
+$(NATALITY_RAW_FP) &: R/00-data-prep/natality/01-unzip-data.R 
 	Rscript $< 
 	@echo "Unzipped natality data"
 # Extract data from txt into annual fst files 
-$(health-clean-dir)period-clean/natality-%.fst: \
+$(NATALITY_CLEAN_FP) &: \
  R/00-data-prep/natality/02-period-micro-clean.R \
  R/00-data-prep/natality/00-data-dictionary.R \
  $(NATALITY_RAW_FP)
@@ -124,6 +129,11 @@ $(raw-dir)fertilizer-dt-interpolated.fst &: R/00-data-prep/farm/05-fertilizer.R
 
 # -----------------------------------------------------------------------------
 # Targets for data-clean
+
+# SEER data 
+$(SEER_DT) &: R/00-data-prep/controls/06-seer-pop.R
+	Rscript $<
+	@echo "Made SEER data"
 
 # Treatment definitions
 $(clean-dir)trt-dt.fst: \

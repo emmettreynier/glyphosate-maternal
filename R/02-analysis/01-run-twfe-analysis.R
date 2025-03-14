@@ -422,7 +422,7 @@
       # Load the age-share dataset
 # NOTE The 1969-2022 version has a longer time series but lacks "origin" data
       seer_dt =
-        here('data', 'seer', 'seer-shares-allpop-1990-2022.fst') |>
+        here('data/raw/seer', 'seer-shares-allpop-1990-2022.fst') |>
         read.fst(as.data.table = TRUE)
       # Merge
       est_dt %<>% merge(

@@ -362,7 +362,7 @@ if (data_year == 1990) {
 
 # Save -----------------------------------------------------------------------------------
   # Ensure the target directory exits
-  dir_save = here('data', 'seer')
+  dir_save = here('data/raw/seer')
   dir_save |> dir.create(recursive = TRUE, showWarnings = FALSE)
   # Save each dataset (noting the data year)
   write_fst(
