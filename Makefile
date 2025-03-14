@@ -53,6 +53,10 @@ data-clean: \
  $(clean-dir)glyph-nat-dt.fst \
  $(SEER_DT)
 
+main-analysis: R/02/analysis/01-run-twfe-analysis.R
+	Rscript $< 
+	@echo "Ran main analysis"
+
 # Natality data clean ---------------------------------------------------------
 # First need to unzip natality files 
 $(NATALITY_RAW_FP) &: R/00-data-prep/natality/01-unzip-data.R 
