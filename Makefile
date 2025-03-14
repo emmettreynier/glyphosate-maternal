@@ -53,7 +53,7 @@ data-clean: \
  $(clean-dir)glyph-nat-dt.fst \
  $(SEER_DT)
 
-main-analysis: R/02/analysis/01-run-twfe-analysis.R
+main-analysis: R/02-analysis/01-run-twfe-analysis.R
 	Rscript $< 
 	@echo "Ran main analysis"
 
