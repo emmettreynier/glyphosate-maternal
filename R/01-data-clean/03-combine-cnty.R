@@ -69,17 +69,17 @@ create_comb_cnty_dt = function(yr_start = 1990, yr_end = 2017){
   # Now for crop data ---------------------------------------------------------------
   # ALL crop acreage
   all_crop_acre_dt = read.fst(
-    here('data/download-script/all-crop-acre-dt.fst'), 
+    here('data/raw/all-crop-acre-dt.fst'), 
     as.data.table = TRUE
   )[year %in% yr_start:yr_end]
   # Crop yields 
   all_crop_yield_dt = read.fst(
-    here("data/download-script/all-crop-yield-dt.fst"), 
+    here("data/raw/all-crop-yield-dt.fst"), 
     as.data.table = TRUE
   )[year %in% yr_start:yr_end & str_sub(GEOID,1,2) != '15']
   # Percent irrigated
   all_crop_irrigated_dt = read.fst(
-    here("data/download-script/all-crop-irrigated-dt.fst"), 
+    here("data/raw/all-crop-irrigated-dt.fst"), 
     as.data.table = TRUE
   )[year %in% yr_start:yr_end]
   setnames(
