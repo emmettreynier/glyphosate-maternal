@@ -876,46 +876,38 @@
   }
 
 
-# Estimates: Main, pooled results --------------------------------------------------------
-  # Instrument: Yield diff percentile GMO max
-  est_twfe(
-    iv = 'all_yield_diff_percentile_gmo_max',
-    iv_shift = 'glyphosate_nat_100km',
-    spatial_subset = 'rural',
-    county_subset = NULL,
-    county_subset_name = NULL,
-    het_split = NULL,
-    base_fe = c('year_month', 'fips_res', 'fips_occ'),
-    dem_fe = TRUE,
-    dad_fe = TRUE,
-    control_sets = list2(
-      'none',
-      c(
-        'pest',
-        'unempl_rate', 'empl_rate', 'pct_farm_empl', 'farm_empl_per_cap',
-        'inc_per_cap_farm', 'inc_per_cap_nonfarm',
-        'pop_all',
-        'age_share', 'race_share',
-        'fert'
-       )
-    ),
-    name_suffix = NULL,
-    clustering = c('year', 'state_fips'),
-    include_ols = TRUE,
-    include_did = TRUE,
-    skip_iv = FALSE
-  )
+# # Estimates: Main, pooled results --------------------------------------------------------
+#   # Instrument: Yield diff percentile GMO max
+#   est_twfe(
+#     iv = 'all_yield_diff_percentile_gmo_max',
+#     iv_shift = 'glyphosate_nat_100km',
+#     spatial_subset = 'rural',
+#     county_subset = NULL,
+#     county_subset_name = NULL,
+#     het_split = NULL,
+#     base_fe = c('year_month', 'fips_res', 'fips_occ'),
+#     dem_fe = TRUE,
+#     dad_fe = TRUE,
+#     control_sets = list2(
+#       'none',
+#       c(
+#         'pest',
+#         'unempl_rate', 'empl_rate', 'pct_farm_empl', 'farm_empl_per_cap',
+#         'inc_per_cap_farm', 'inc_per_cap_nonfarm',
+#         'pop_all',
+#         'age_share', 'race_share',
+#         'fert'
+#        )
+#     ),
+#     name_suffix = NULL,
+#     clustering = c('year', 'state_fips'),
+#     include_ols = TRUE,
+#     include_did = TRUE,
+#     skip_iv = FALSE
+#   )
 
   # Instrument: Yield diff percentile GMO max, east of 100th meridian
   est_twfe(
-    outcomes = c(
-      'dbwt',
-      'dbwt_pctl_pre',
-      'i_lbw', 'i_vlbw',
-      'gestation', 'i_preterm',
-      'c_section',
-      'index'
-    ),
     iv = 'e100m_yield_diff_percentile_gmo_max',
     iv_shift = NULL,
     spatial_subset = 'rural',
